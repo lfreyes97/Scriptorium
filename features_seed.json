@@ -1,0 +1,81 @@
+
+[
+  {
+    "id": "feat-rebranding",
+    "title": "Rebranding integral a Scriptorium",
+    "type": "Feature",
+    "status": "Done",
+    "priority": "High",
+    "points": 5,
+    "assigneeId": "u1",
+    "tag": "UI/UX",
+    "tagColor": "bg-purple-100 text-purple-700",
+    "description": "Cambio de identidad visual de Logos Architect a Scriptorium. Actualización de tipografía Serif y paleta académica.",
+    "updatedAt": "2025-05-20T10:00:00Z"
+  },
+  {
+    "id": "feat-zod-validation",
+    "title": "Capa de Validación con Zod",
+    "type": "Feature",
+    "status": "Done",
+    "priority": "High",
+    "points": 8,
+    "assigneeId": "u1",
+    "tag": "Dev",
+    "tagColor": "bg-blue-100 text-blue-700",
+    "description": "Implementación de contratos de datos estrictos para el Rastro de Funciones. Garantiza integridad antes del envío al backend.",
+    "updatedAt": "2025-05-20T11:30:00Z"
+  },
+  {
+    "id": "feat-backend-localhost",
+    "title": "Integración Backend Localhost",
+    "type": "Epic",
+    "status": "InProgress",
+    "priority": "High",
+    "points": 13,
+    "assigneeId": "u1",
+    "tag": "Backend",
+    "tagColor": "bg-orange-100 text-orange-700",
+    "description": "Conexión de la suite con una API local (Node.js/Go) para persistencia real fuera del navegador.",
+    "updatedAt": "2025-05-20T12:00:00Z"
+  },
+  {
+    "id": "feat-pdf-export",
+    "title": "Exportación avanzada a PDF/LaTeX",
+    "type": "Feature",
+    "status": "Review",
+    "priority": "Medium",
+    "points": 5,
+    "assigneeId": "u3",
+    "tag": "Editorial",
+    "tagColor": "bg-green-100 text-green-700",
+    "description": "Generación de documentos con formato académico riguroso listos para impresión desde Newsroom y OCR.",
+    "updatedAt": "2025-05-19T09:00:00Z"
+  },
+  {
+    "id": "feat-vector-search",
+    "title": "Búsqueda Semántica Vectorial",
+    "type": "Epic",
+    "status": "Backlog",
+    "priority": "High",
+    "points": 21,
+    "assigneeId": null,
+    "tag": "AI",
+    "tagColor": "bg-pink-100 text-pink-700",
+    "description": "Uso de embeddings de Gemini para buscar conceptos en la Base de Conocimiento por significado, no solo por palabras clave.",
+    "updatedAt": "2025-05-20T08:00:00Z"
+  },
+  {
+    "id": "task-auth-system",
+    "title": "Sistema de Autenticación Interna",
+    "type": "Task",
+    "status": "Backlog",
+    "priority": "Medium",
+    "points": 3,
+    "assigneeId": null,
+    "tag": "Security",
+    "tagColor": "bg-gray-100 text-gray-700",
+    "description": "Implementar JWT o sesión segura para proteger el acceso al Scriptorium en el entorno local.",
+    "updatedAt": "2025-05-20T08:30:00Z"
+  }
+]
