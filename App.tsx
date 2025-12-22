@@ -20,6 +20,7 @@ import EbookReaderView from './components/EbookReaderView';
 import CommandMenu from './components/CommandMenu';
 import PluginActionOverlay from './components/PluginActionOverlay';
 import { SidebarTab } from './types';
+import { fileSystem } from './services/fileSystem';
 
 const App = () => {
   // Central State for View Routing
@@ -43,61 +44,61 @@ const App = () => {
   const handleNewChat = () => {
     // If we are on dashboard, reset it. If not, go to dashboard then reset.
     if (activeTab !== SidebarTab.Dashboard) {
-        setActiveTab(SidebarTab.Dashboard);
+      setActiveTab(SidebarTab.Dashboard);
     }
     setTimeout(() => setChatSessionId(Date.now()), 10);
   };
 
   const handleTabChange = (tab: SidebarTab) => {
-      setActiveTab(tab);
+    setActiveTab(tab);
   };
 
   const renderActiveView = () => {
-      switch (activeTab) {
-          case SidebarTab.Dashboard:
-              return <MainChat key={chatSessionId} />;
-          case SidebarTab.Editor:
-              return <div className="flex-1 h-screen relative bg-background"><EditorView onBack={() => setActiveTab(SidebarTab.Dashboard)} /></div>;
-          case SidebarTab.Calendar:
-              return <CalendarView />;
-          case SidebarTab.Translation:
-              return <TranslationView />;
-          case SidebarTab.KnowledgeBase:
-              return <KnowledgeBaseView />;
-          case SidebarTab.FeatureTracker:
-              return <FeatureTrackerView />;
-          case SidebarTab.Tutorials:
-              return <TutorialsView />;
-          case SidebarTab.Newspaper:
-              return <NewspaperView />;
-          case SidebarTab.OCR:
-              return <OCRView />;
-          case SidebarTab.Audio:
-              return <AudioStudioView />;
-          case SidebarTab.Mockup:
-              return <MockupGeneratorView />;
-          case SidebarTab.WorkflowStudio:
-              return <WorkflowStudioView />;
-          case SidebarTab.TaskManager:
-              return <TaskManagerView />;
-          case SidebarTab.ProjectManager:
-              return <ProjectManagerView />;
-          case SidebarTab.Notes:
-              return <NotesView />;
-          case SidebarTab.Reader:
-              return <EbookReaderView />;
-          default:
-              return <MainChat />;
-      }
+    switch (activeTab) {
+      case SidebarTab.Dashboard:
+        return <MainChat key={chatSessionId} />;
+      case SidebarTab.Editor:
+        return <div className="flex-1 h-screen relative bg-background"><EditorView onBack={() => setActiveTab(SidebarTab.Dashboard)} /></div>;
+      case SidebarTab.Calendar:
+        return <CalendarView />;
+      case SidebarTab.Translation:
+        return <TranslationView />;
+      case SidebarTab.KnowledgeBase:
+        return <KnowledgeBaseView />;
+      case SidebarTab.FeatureTracker:
+        return <FeatureTrackerView />;
+      case SidebarTab.Tutorials:
+        return <TutorialsView />;
+      case SidebarTab.Newspaper:
+        return <NewspaperView />;
+      case SidebarTab.OCR:
+        return <OCRView />;
+      case SidebarTab.Audio:
+        return <AudioStudioView />;
+      case SidebarTab.Mockup:
+        return <MockupGeneratorView />;
+      case SidebarTab.WorkflowStudio:
+        return <WorkflowStudioView />;
+      case SidebarTab.TaskManager:
+        return <TaskManagerView />;
+      case SidebarTab.ProjectManager:
+        return <ProjectManagerView />;
+      case SidebarTab.Notes:
+        return <NotesView />;
+      case SidebarTab.Reader:
+        return <EbookReaderView />;
+      default:
+        return <MainChat />;
+    }
   };
 
   return (
     <div className="flex h-screen w-full font-sans overflow-hidden bg-background text-foreground transition-colors duration-300">
-      
+
       {/* Global Command Menu */}
-      <CommandMenu 
+      <CommandMenu
         activeTab={activeTab}
-        onNavigate={handleTabChange} 
+        onNavigate={handleTabChange}
         onThemeToggle={toggleTheme}
         onNewChat={handleNewChat}
       />
@@ -105,14 +106,14 @@ const App = () => {
       {/* Global Plugin Action Overlay (Transversal Tools) */}
       <PluginActionOverlay />
 
-      <Sidebar 
-        onNewChat={handleNewChat} 
-        activeTab={activeTab} 
+      <Sidebar
+        onNewChat={handleNewChat}
+        activeTab={activeTab}
         onTabChange={handleTabChange}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-      
+
       {/* View Container */}
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-secondary/30">
         {renderActiveView()}
