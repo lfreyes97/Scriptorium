@@ -53,7 +53,27 @@ export enum SidebarTab {
   TaskManager = 'TaskManager',
   ProjectManager = 'ProjectManager',
   Notes = 'Notes',
-  Reader = 'Reader'
+  Reader = 'Reader',
+  Settings = 'Settings'
+}
+
+export enum UserRole {
+  Admin = 'Admin',
+  Member = 'Member',
+  Viewer = 'Viewer'
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar?: string; // URL or base64 placeholder
+  preferences?: {
+    theme: 'light' | 'dark';
+    notifications: boolean;
+  };
+  createdAt: string;
 }
 
 export interface GuideCardProps {

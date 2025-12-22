@@ -17,10 +17,12 @@ import ProjectManagerView from './components/ProjectManagerView';
 import WorkflowStudioView from './components/WorkflowStudioView';
 import NotesView from './components/NotesView';
 import EbookReaderView from './components/EbookReaderView';
+import SettingsView from './components/SettingsView';
 import CommandMenu from './components/CommandMenu';
 import PluginActionOverlay from './components/PluginActionOverlay';
 import { SidebarTab } from './types';
 import { fileSystem } from './services/fileSystem';
+import { UserService } from './services/userService';
 
 const App = () => {
   // Central State for View Routing
@@ -28,6 +30,7 @@ const App = () => {
   // Using a key to force re-render and reset state of MainChat for "New Chat" functionality
   const [chatSessionId, setChatSessionId] = useState(Date.now());
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [currentUser] = useState(UserService.getCurrentUser());
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -87,6 +90,8 @@ const App = () => {
         return <NotesView />;
       case SidebarTab.Reader:
         return <EbookReaderView />;
+      case SidebarTab.Settings:
+        return <SettingsView />;
       default:
         return <MainChat />;
     }
@@ -112,6 +117,7 @@ const App = () => {
         onTabChange={handleTabChange}
         theme={theme}
         onToggleTheme={toggleTheme}
+        currentUser={currentUser}
       />
 
       {/* View Container */}
