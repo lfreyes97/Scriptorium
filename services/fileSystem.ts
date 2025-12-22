@@ -1,164 +1,123 @@
-// This service acts as the Unified Filesystem Bridge.
-// Strategies:
-// 1. TAURI: If running in desktop app, use native OS bindings.
-// 2. API: If running in browser with local backend, use fetch.
-// 3. MOCK: Fallback for demo/preview.
-
-const API_URL = process.env.FS_API_URL || 'http://localhost:3001/api/fs';
-
-// Tauri Types (Partial)
-declare global {
-  interface Window {
-    __TAURI__?: {
-      fs: {
-        readDir: (path: string, options?: any) => Promise<any[]>;
-        createDir: (path: string, options?: any) => Promise<void>;
-        writeBinaryFile: (path: string, data: any) => Promise<void>;
-        BaseDirectory: { Document: number };
-      };
-      path: {
-        documentDir: () => Promise<string>;
-        join: (...args: string[]) => Promise<string>;
-      };
-    };
-  }
-}
+import { BaseDirectory, readTextFile, writeTextFile, writeFile as writeBinaryFile, mkdir, exists, readDir, stat, metadata } from '@tauri-apps/plugin-fs';
+import { homeDir, join } from '@tauri-apps/api/path';
 
 export interface FileEntry {
-  id: string; // Full Path
+  id: string;
   name: string;
-  type: 'folder' | 'file';
-  extension?: string;
-  size?: string;
+  type: 'file' | 'folder';
   date: string;
+  size?: string;
   itemsCount?: number;
 }
 
-// --- HELPERS ---
+class FileSystemService {
+  private baseDir: string = 'Documentos/Scriptorium';
 
-const isTauri = () => typeof window !== 'undefined' && !!window.__TAURI__;
+  async getBasePath(): Promise<string> {
+    const home = await homeDir();
+    return await join(home, this.baseDir);
+  }
 
-const getExtension = (filename: string) => filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
+  async ensureDirectoryExists(): Promise<void> {
+    const path = await this.getBasePath();
+    const doesExist = await exists(path);
 
-// --- API IMPLEMENTATION ---
-
-export const listFiles = async (path: string = '/'): Promise<FileEntry[]> => {
-  // 1. TAURI STRATEGY
-  if (isTauri()) {
-    try {
-      const tauri = window.__TAURI__!;
-      let targetPath = path;
-      
-      // Default to Documents if root is requested
-      if (!targetPath || targetPath === '/') {
-        targetPath = await tauri.path.documentDir();
+    if (!doesExist) {
+      try {
+        await mkdir(path, { recursive: true });
+      } catch (e) {
+        console.error("Failed to create directory:", e);
+        throw e;
       }
-
-      const entries = await tauri.fs.readDir(targetPath);
-      
-      // Map Tauri entries to our generic FileEntry
-      return entries.map((e: any) => ({
-        id: e.path,
-        name: e.name || 'Unknown',
-        type: e.children ? 'folder' : 'file',
-        extension: e.children ? undefined : getExtension(e.name || ''),
-        date: 'Hoy', // Metadata requires separate fs.stat call in Tauri, skipping for perf
-        size: '-',
-        itemsCount: e.children ? e.children.length : undefined
-      }));
-    } catch (error) {
-      console.error("Tauri FS Error:", error);
-      return []; // Return empty on permission error
     }
   }
 
-  // 2. HTTP API STRATEGY
-  try {
-    const response = await fetch(`${API_URL}/list?path=${encodeURIComponent(path)}`);
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    // Fall through to mock
+  async writeFile(filename: string, content: string): Promise<void> {
+    await this.ensureDirectoryExists();
+    const basePath = await this.getBasePath();
+    const path = await join(basePath, filename);
+    await writeTextFile(path, content);
   }
 
-  // 3. MOCK FALLBACK
-  console.warn("FileSystem: Using Mock Data");
-  return getMockFiles(path);
-};
+  async readFile(filename: string): Promise<string> {
+    const basePath = await this.getBasePath();
+    const path = await join(basePath, filename);
+    return await readTextFile(path);
+  }
 
-export const createFolder = async (path: string, folderName: string): Promise<boolean> => {
-  if (isTauri()) {
+  // --- New Methods for KnowledgeBaseView ---
+
+  async listFiles(subPath: string = '/'): Promise<FileEntry[]> {
+    await this.ensureDirectoryExists();
+    const basePath = await this.getBasePath();
+    // Normalize subPath: ensure it doesn't start with / if we are joining, or handle it carefully
+    // If subPath is '/', we just use basePath.
+    const targetPath = subPath === '/' ? basePath : await join(basePath, subPath);
+
     try {
-      const tauri = window.__TAURI__!;
-      const fullPath = await tauri.path.join(path, folderName);
-      await tauri.fs.createDir(fullPath);
-      return true;
+      const entries = await readDir(targetPath);
+      const fileEntries: FileEntry[] = [];
+
+      for (const entry of entries) {
+        const fullPath = await join(targetPath, entry.name);
+
+        let stats;
+        try {
+          stats = await stat(fullPath);
+        } catch (e) {
+          console.warn(`Could not get stats for ${fullPath}`, e);
+          stats = { mtime: new Date(), size: 0 }; // Fallback
+        }
+
+        const isDir = entry.isDirectory;
+
+        fileEntries.push({
+          id: subPath === '/' ? entry.name : `${subPath}/${entry.name}`, // Simple relative path as ID
+          name: entry.name,
+          type: isDir ? 'folder' : 'file',
+          date: stats.mtime ? new Date(stats.mtime).toLocaleDateString() : 'Unknown', // Simplistic date formatting
+          size: isDir ? undefined : this.formatSize(stats.size || 0),
+          itemsCount: isDir ? 0 : undefined, // We'd need to recursive count to be accurate, setting 0 for now
+        });
+      }
+      return fileEntries;
     } catch (e) {
-      console.error(e);
-      return false;
+      console.error("Error listing files:", e);
+      return [];
     }
   }
 
-  try {
-    const response = await fetch(`${API_URL}/mkdir`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, name: folderName })
-    });
-    return response.ok;
-  } catch (error) {
-    return true; // Mock success
-  }
-};
+  async createFolder(subPath: string, folderName: string): Promise<void> {
+    const basePath = await this.getBasePath();
+    const targetParent = subPath === '/' ? basePath : await join(basePath, subPath);
+    const newFolderPath = await join(targetParent, folderName);
 
-export const uploadFile = async (path: string, file: File): Promise<boolean> => {
-  if (isTauri()) {
-    try {
-      const tauri = window.__TAURI__!;
-      const fullPath = await tauri.path.join(path, file.name);
-      const buffer = await file.arrayBuffer();
-      await tauri.fs.writeBinaryFile(fullPath, new Uint8Array(buffer));
-      return true;
-    } catch (e) {
-      console.error(e);
-      return false;
-    }
+    await mkdir(newFolderPath);
   }
 
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('path', path);
-    const response = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
-    return response.ok;
-  } catch (error) {
-    return true; // Mock success
+  async uploadFile(subPath: string, file: File): Promise<void> {
+    const basePath = await this.getBasePath();
+    const targetParent = subPath === '/' ? basePath : await join(basePath, subPath);
+    const targetPath = await join(targetParent, file.name);
+
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    await writeBinaryFile(targetPath, uint8Array);
   }
-};
 
-// --- MOCK DATA ---
+  private formatSize(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+}
 
-const MOCK_DB: FileEntry[] = [
-    // Root Folders
-    { id: '/Proyectos', name: 'Proyectos', type: 'folder', date: '2023-10-01', itemsCount: 5 },
-    { id: '/Grabaciones', name: 'Grabaciones', type: 'folder', date: '2023-10-05', itemsCount: 12 },
-    { id: '/Bibliografía', name: 'Bibliografía', type: 'folder', date: '2023-09-15', itemsCount: 30 },
-    
-    // Root Files
-    { id: '/root_1.mp3', name: 'Sermón_Domingo.mp3', type: 'file', extension: 'mp3', size: '12 MB', date: 'Ayer' },
-    { id: '/root_2.wav', name: 'Entrevista_Raw.wav', type: 'file', extension: 'wav', size: '45 MB', date: 'Hoy' },
-    { id: '/root_3.pdf', name: 'Notas_Teologia.pdf', type: 'file', extension: 'pdf', size: '2.4 MB', date: 'Hace 2 horas' },
-];
+export const fileSystem = new FileSystemService();
 
-const getMockFiles = (path: string): Promise<FileEntry[]> => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            if (path === '/' || path === '') {
-                resolve(MOCK_DB);
-            } else {
-                resolve([]);
-            }
-        }, 300);
-    });
-};
+// Stacked exports for compatibility with KnowledgeBaseView import structure
+export const listFiles = (path: string) => fileSystem.listFiles(path);
+export const createFolder = (path: string, name: string) => fileSystem.createFolder(path, name);
+export const uploadFile = (path: string, file: File) => fileSystem.uploadFile(path, file);

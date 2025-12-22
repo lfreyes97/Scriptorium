@@ -1,0 +1,29 @@
+
+> scriptorium@0.0.0 build /home/luisr/Scriptorium
+> vite build
+
+vite v7.3.0 building client environment for production...
+transforming...
+✓ 2044 modules transformed.
+✗ Build failed in 3.23s
+error during build:
+components/KnowledgeBaseView.tsx (2:9): "listFiles" is not exported by "services/fileSystem.ts", imported by "components/KnowledgeBaseView.tsx".
+file: /home/luisr/Scriptorium/components/KnowledgeBaseView.tsx:2:9
+
+1: import React, { useState, useRef, useEffect } from 'react';
+2: import { listFiles, createFolder, uploadFile, FileEntry } from '../services/fileSystem';
+            ^
+3: 
+4: // --- Icons ---
+
+    at getRollupError (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at Module.error (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/node-entry.js:17022:16)
+    at Module.traceVariable (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/node-entry.js:17478:29)
+    at ModuleScope.findVariable (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/node-entry.js:15141:39)
+    at ReturnValueScope.findVariable (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/node-entry.js:5688:38)
+    at FunctionBodyScope.findVariable (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/node-entry.js:5688:38)
+    at ReturnValueScope.findVariable (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/node-entry.js:5688:38)
+    at FunctionBodyScope.findVariable (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/node-entry.js:5688:38)
+    at BlockScope.findVariable (file:///home/luisr/Scriptorium/node_modules/.pnpm/rollup@4.54.0/node_modules/rollup/dist/es/shared/node-entry.js:5688:38)
+ ELIFECYCLE  Command failed with exit code 1.
