@@ -1,5 +1,5 @@
 
-import { z } from "https://esm.sh/zod@^3.23.8";
+import { z } from "zod";
 
 // --- Schemas de Validación (Zod) ---
 
