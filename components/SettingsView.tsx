@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, UserRole } from '../types';
+import { User, UserRole, RolePermissions, Permission } from '../types';
 import { UserService } from '../services/userService';
 
 const Avatar = ({ name, url, size = 'md' }: { name: string, url?: string, size?: 'sm' | 'md' | 'lg' | 'xl' }) => {
@@ -31,6 +31,7 @@ export default function SettingsView() {
     const [profileName, setProfileName] = useState(currentUser.name);
     const [profileEmail, setProfileEmail] = useState(currentUser.email);
     const [profileAvatar, setProfileAvatar] = useState(currentUser.avatar || '');
+    const [geminiApiKey, setGeminiApiKey] = useState(currentUser.preferences?.geminiApiKey || '');
 
     useEffect(() => {
         setUsers(UserService.getUsers());
@@ -41,7 +42,11 @@ export default function SettingsView() {
             ...currentUser,
             name: profileName,
             email: profileEmail,
-            avatar: profileAvatar || undefined
+            avatar: profileAvatar || undefined,
+            preferences: {
+                ...currentUser.preferences,
+                geminiApiKey: geminiApiKey || undefined
+            }
         };
         UserService.saveUser(updatedUser);
         setCurrentUser(updatedUser);
@@ -140,6 +145,22 @@ export default function SettingsView() {
                                 {currentUser.role}
                             </div>
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-muted-foreground mb-1">Gemini API Key</label>
+                            <div className="relative">
+                                <input
+                                    type="password"
+                                    value={geminiApiKey}
+                                    onChange={(e) => setGeminiApiKey(e.target.value)}
+                                    className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 pr-10"
+                                    placeholder="Pegar API Key aquí..."
+                                />
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11.536 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">Tu clave se guarda localmente y se usa para conectar con Scriptorium AI.</p>
+                        </div>
                     </div>
 
                     <button
@@ -149,66 +170,74 @@ export default function SettingsView() {
                         Guardar Cambios
                     </button>
                 </div>
-            )}
+            )
+            }
 
             {/* Team Tab */}
-            {activeTab === 'team' && (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-xl font-semibold">Usuarios del Sistema</h2>
-                        <button
-                            onClick={handleAddUser}
-                            className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 flex items-center gap-2"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                            Agregar Usuario
-                        </button>
-                    </div>
+            {
+                activeTab === 'team' && (
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-semibold">Usuarios del Sistema</h2>
+                            <button
+                                onClick={handleAddUser}
+                                className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                Agregar Usuario
+                            </button>
+                        </div>
 
-                    <div className="grid gap-4">
-                        {users.map(user => (
-                            <div key={user.id} className="p-4 bg-secondary/30 border border-border rounded-xl flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <Avatar name={user.name} url={user.avatar} size="md" />
-                                    <div>
-                                        {editingUser?.id === user.id ? (
-                                            <div className="flex gap-2 mb-1">
-                                                <input
-                                                    value={editingUser.name}
-                                                    onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
-                                                    className="px-2 py-1 text-sm bg-background border border-border rounded"
-                                                />
-                                                <input
-                                                    value={editingUser.email}
-                                                    onChange={e => setEditingUser({ ...editingUser, email: e.target.value })}
-                                                    className="px-2 py-1 text-sm bg-background border border-border rounded"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <h3 className="font-medium">{user.name} {currentUser.id === user.id && <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full ml-2">Tú</span>}</h3>
-                                                <p className="text-sm text-muted-foreground">{user.email}</p>
-                                            </>
-                                        )}
+                        <div className="grid gap-4">
+                            {users.map(user => (
+                                <div key={user.id} className="p-4 bg-secondary/30 border border-border rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <Avatar name={user.name} url={user.avatar} size="md" />
+                                        <div>
+                                            {editingUser?.id === user.id ? (
+                                                <div className="flex gap-2 mb-1">
+                                                    <input
+                                                        value={editingUser.name}
+                                                        onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
+                                                        className="px-2 py-1 text-sm bg-background border border-border rounded"
+                                                    />
+                                                    <input
+                                                        value={editingUser.email}
+                                                        onChange={e => setEditingUser({ ...editingUser, email: e.target.value })}
+                                                        className="px-2 py-1 text-sm bg-background border border-border rounded"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <h3 className="font-medium">{user.name} {currentUser.id === user.id && <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full ml-2">Tú</span>}</h3>
+                                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center gap-4">
-                                    {editingUser?.id === user.id ? (
-                                        <select
-                                            value={editingUser.role}
-                                            onChange={e => setEditingUser({ ...editingUser, role: e.target.value as UserRole })}
-                                            className="px-2 py-1 text-sm bg-background border border-border rounded"
-                                        >
-                                            {Object.values(UserRole).map(role => (
-                                                <option key={role} value={role}>{role}</option>
-                                            ))}
-                                        </select>
+                                    <div className="flex items-center gap-4">
+                                        {editingUser?.id === user.id ? (
+                                            <select
+                                            <div>
+                                                <select
+                                                    value={editingUser.role}
+                                                    onChange={e => setEditingUser({ ...editingUser, role: e.target.value as UserRole })}
+                                                    className="px-2 py-1 text-sm bg-background border border-border rounded"
+                                                >
+                                                    {Object.values(UserRole).map(role => (
+                                                        <option key={role} value={role}>{role}</option>
+                                                    ))}
+                                                </select>
+                                                <div className="mt-2 text-xs text-muted-foreground max-w-[200px]">
+                                                    Permisos: {RolePermissions[editingUser.role].map(p => p.split('_').join(' ')).join(', ')}
+                                                </div>
+                                            </div>
                                     ) : (
-                                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${user.role === UserRole.Admin ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                                            {user.role}
-                                        </span>
-                                    )}
+                                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${user.role === UserRole.Admin ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                        {user.role}
+                                    </span>
+                                        )}
 
                                     <div className="flex items-center gap-2">
                                         {editingUser?.id === user.id ? (
@@ -226,11 +255,12 @@ export default function SettingsView() {
                                         )}
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                                </div>
+                            ))}
                     </div>
-                </div>
-            )}
-        </div>
+                    </div>
+    )
+}
+        </div >
     );
 }

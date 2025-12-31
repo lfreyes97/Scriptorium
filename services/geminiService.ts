@@ -3,12 +3,21 @@ import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
 
 
+import { UserService } from './userService';
+
 let aiInstance: GoogleGenAI | null = null;
+let currentApiKey: string | null = null;
 
 const getAIClient = () => {
-  if (!aiInstance) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "dummy_key_for_dev";
-    aiInstance = new GoogleGenAI({ apiKey });
+  const user = UserService.getCurrentUser();
+  const userKey = user.preferences?.geminiApiKey;
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY || "dummy_key_for_dev";
+
+  const effectiveKey = userKey || envKey;
+
+  if (!aiInstance || currentApiKey !== effectiveKey) {
+    aiInstance = new GoogleGenAI({ apiKey: effectiveKey });
+    currentApiKey = effectiveKey;
   }
   return aiInstance;
 };

@@ -1,4 +1,4 @@
-import { User, UserRole } from '../types';
+import { User, UserRole, RolePermissions, Permission } from '../types';
 
 const STORAGE_KEY_USERS = 'app_users';
 const STORAGE_KEY_CURRENT_USER = 'app_current_user';
@@ -87,5 +87,10 @@ export class UserService {
 
     static setCurrentUser(user: User): void {
         localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(user));
+    }
+
+    static hasPermission(user: User, permission: Permission): boolean {
+        const permissions = RolePermissions[user.role] || [];
+        return permissions.includes(permission);
     }
 }

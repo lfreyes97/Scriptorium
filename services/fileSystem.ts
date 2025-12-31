@@ -106,18 +106,68 @@ class FileSystemService {
     await writeBinaryFile(targetPath, uint8Array);
   }
 
-  private formatSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  // --- Project Management Methods ---
+
+  async getProjectsPath(): Promise<string> {
+    const base = await this.getBasePath();
+    return await join(base, 'projects');
+  }
+
+  async ensureProjectsDirectoryExists(): Promise<void> {
+    const path = await this.getProjectsPath();
+    const doesExist = await exists(path);
+    if (!doesExist) {
+      await mkdir(path, { recursive: true });
+    }
+  }
+
+  async createProject(projectId: string, initialData: any): Promise<void> {
+    await this.ensureProjectsDirectoryExists();
+    const projectsPath = await this.getProjectsPath();
+    const projectDir = await join(projectsPath, projectId);
+
+    // Create specific project folder
+    await mkdir(projectDir, { recursive: true });
+
+    // Create 'project.json' with metadata
+    const metadataPath = await join(projectDir, 'project.json');
+    await writeTextFile(metadataPath, JSON.stringify(initialData, null, 2));
+
+    // Create default subfolders
+    await mkdir(await join(projectDir, 'content'));
+    await mkdir(await join(projectDir, 'assets'));
+  }
+
+  async listProjects(): Promise<any[]> {
+    await this.ensureProjectsDirectoryExists();
+    const projectsPath = await this.getProjectsPath();
+    const entries = await readDir(projectsPath);
+
+    const projects = [];
+    for (const entry of entries) {
+      if (entry.isDirectory) {
+        try {
+          const projectDir = await join(projectsPath, entry.name);
+          const metadataPath = await join(projectDir, 'project.json');
+          if (await exists(metadataPath)) {
+            const content = await readTextFile(metadataPath);
+            projects.push(JSON.parse(content));
+          }
+        } catch (e) {
+          console.warn(`Failed to read project ${entry.name}`, e);
+        }
+      }
+    }
+    return projects;
   }
 }
 
 export const fileSystem = new FileSystemService();
 
 // Stacked exports for compatibility with KnowledgeBaseView import structure
+// Stacked exports for compatibility with KnowledgeBaseView import structure
 export const listFiles = (path: string) => fileSystem.listFiles(path);
 export const createFolder = (path: string, name: string) => fileSystem.createFolder(path, name);
 export const uploadFile = (path: string, file: File) => fileSystem.uploadFile(path, file);
+export const createProject = (id: string, data: any) => fileSystem.createProject(id, data);
+export const listProjects = () => fileSystem.listProjects();

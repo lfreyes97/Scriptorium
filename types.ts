@@ -63,6 +63,26 @@ export enum UserRole {
   Viewer = 'Viewer'
 }
 
+export enum Permission {
+  MANAGE_USERS = 'manage_users',
+  MANAGE_SYSTEM = 'manage_system',
+  PUBLISH_CONTENT = 'publish_content',
+  SOCIAL_BROADCAST = 'social_broadcast',
+  VIEW_ANALYTICS = 'view_analytics'
+}
+
+export const RolePermissions: Record<UserRole, Permission[]> = {
+  [UserRole.Admin]: Object.values(Permission) as Permission[],
+  [UserRole.Member]: [Permission.PUBLISH_CONTENT, Permission.SOCIAL_BROADCAST],
+  [UserRole.Viewer]: [Permission.VIEW_ANALYTICS]
+};
+
+export interface SocialAccount {
+  provider: 'twitter' | 'linkedin' | 'facebook';
+  handle: string;
+  accessToken: string; // Encrypted in storage
+}
+
 export interface User {
   id: string;
   name: string;
@@ -72,6 +92,12 @@ export interface User {
   preferences?: {
     theme: 'light' | 'dark';
     notifications: boolean;
+    geminiApiKey?: string;
+  };
+  socialAccounts?: SocialAccount[];
+  cmsProfile?: {
+    authorId: string;
+    displayName: string;
   };
   createdAt: string;
 }
